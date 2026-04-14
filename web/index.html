@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Cave of Time | Choose Your Own Adventure</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">Choose Your Own Adventure</a>
+    <button class="menu-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="reader.html">Reader</a></li>
+      <li><a href="explorer.html">Explorer</a></li>
+      <li><a href="author.html">Author</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>The Cave of Time</h1>
+    <p class="subtitle">A Choose Your Own Adventure Experience</p>
+    <p class="description">
+      Step into the classic world of interactive fiction. Read the story, make
+      choices that shape your path, visualize every branching possibility, or
+      create your own adventure. Based on the original <em>Cave of Time</em>
+      by Edward Packard &mdash; reimagined as an interactive web experience.
+    </p>
+  </section>
+
+  <!-- Feature Cards -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Explore the Adventure</h2>
+      <p class="section-subtitle">Three ways to experience the story</p>
+
+      <div class="card-grid">
+        <!-- Reader Card -->
+        <div class="card">
+          <span class="card-icon">&#128214;</span>
+          <h3>Story Reader</h3>
+          <p>
+            Play through <em>The Cave of Time</em> one page at a time. Each
+            choice you make leads to a different outcome &mdash; with over a
+            dozen possible endings to discover.
+          </p>
+          <a href="reader.html" class="card-link">Start Reading &rarr;</a>
+        </div>
+
+        <!-- Explorer Card -->
+        <div class="card">
+          <span class="card-icon">&#128424;</span>
+          <h3>Graph Explorer</h3>
+          <p>
+            Visualize the entire story as an interactive graph. See how pages
+            connect, find every branching point, and trace paths from start
+            to each ending.
+          </p>
+          <a href="explorer.html" class="card-link">Explore the Graph &rarr;</a>
+        </div>
+
+        <!-- Author Card -->
+        <div class="card">
+          <span class="card-icon">&#9997;&#65039;</span>
+          <h3>Authoring Tool</h3>
+          <p>
+            Build your own branching story from scratch. Add pages, define
+            choices, link them together, and export your creation as a
+            shareable JSON file.
+          </p>
+          <a href="author.html" class="card-link">Start Writing &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="section" style="background: linear-gradient(180deg, var(--parchment) 0%, var(--parchment-light) 100%);">
+    <div class="container">
+      <h2 class="section-title">Story at a Glance</h2>
+      <p class="section-subtitle">Loaded from the story data</p>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-number" id="stat-pages">&mdash;</span>
+          <span class="stat-label">Pages</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" id="stat-stories">&mdash;</span>
+          <span class="stat-label">Story Paths</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" id="stat-endings">&mdash;</span>
+          <span class="stat-label">Endings</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p><strong>CSS 382 &mdash; Spring 2026</strong></p>
+    <p>Built by Habiba Elswify &amp; Aasiya</p>
+  </footer>
+
+  <!-- Load stats from story-data.json -->
+  <script>
+    (async function loadStats() {
+      try {
+        const res = await fetch('data/story-data.json');
+        const data = await res.json();
+        const pages = Object.keys(data.pages);
+        const totalPages = pages.length;
+
+        // Count terminal pages (endings)
+        const endings = pages.filter(key => data.pages[key].is_terminal).length;
+
+        // Count distinct story paths using DFS from start page
+        let pathCount = 0;
+        function countPaths(pageNum) {
+          const page = data.pages[String(pageNum)];
+          if (!page || page.is_terminal || !page.choices || page.choices.length === 0) {
+            pathCount++;
+            return;
+          }
+          for (const choice of page.choices) {
+            countPaths(choice.target);
+          }
+        }
+        countPaths(data.start_page);
+
+        document.getElementById('stat-pages').textContent = totalPages;
+        document.getElementById('stat-stories').textContent = pathCount;
+        document.getElementById('stat-endings').textContent = endings;
+      } catch (e) {
+        console.error('Could not load story data:', e);
+      }
+    })();
+  </script>
+
+</body>
+</html>

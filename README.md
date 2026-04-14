@@ -1,61 +1,70 @@
-# choose-your-own-adventure
+# The Cave of Time - Choose Your Own Adventure
 
-## Build Story Graph
+A web-based interactive experience built on top of the classic *Cave of Time* CYOA story. Read the story, explore the branching graph, or create your own adventure.
 
-Run:
+## Deployed Website
 
-```bash
-python3 scripts/build_story_graph.py \
-	--pages-dir output/cot-pages-ocr-v2 \
-	--output output/cot-story-graph.mmd
-```
+**Live Site**: https://habibaelswify.github.io/choose-your-own-adventure/web/
 
-Generated output:
+## GitHub Repository
 
-- `output/cot-story-graph.mmd`: Mermaid graph of branching story transitions from the corrected OCR v2 page set
+**Repo**: https://github.com/habibaElswify/choose-your-own-adventure
 
-## Generate All Story Variants
+## Team
 
-Run:
+- Habiba Elswify
+- Aasiya
 
-```bash
-python3 scripts/write_all_stories.py
-```
+## Features
 
-Generated outputs:
+### Interactive Story Reader
+Read through *The Cave of Time* one page at a time, making choices at each branch point. Track your journey with breadcrumbs and discover all 42 possible endings.
 
-- `output/cot-stories/story-0001.txt` (and additional numbered files): one complete path per file
-- `output/cot-stories/manifest.json`: index of generated story files and page paths
+### Story Graph Explorer
+Visualize the entire story as an interactive graph. Click nodes to preview pages, zoom and pan to explore, and jump into the reader from any point in the story.
 
-Optional flags:
+### Authoring Tool
+Create your own branching stories. Add pages, define choices, connect paths, and export your creation as a shareable JSON file.
 
-```bash
-python3 scripts/write_all_stories.py \
-	--graph output/cot-story-graph.mmd \
-	--pages-dir output/cot-pages-ocr-v2 \
-	--output-dir output/cot-stories \
-	--start-page 2 \
-	--max-decisions 20
-```
+## Tech Stack
 
-## Re-Extract From Spread-Scanned PDF
+- **Frontend**: Vanilla HTML, CSS, JavaScript (no frameworks)
+- **Data Pipeline**: Python scripts for OCR extraction, graph building, and JSON generation
+- **Deployment**: GitHub Pages (static site)
 
-The book scan is a two-page spread layout. The story starts on the left side of PDF page 8:
-
-- PDF page 8 -> story pages 2 and 3
-- PDF page 9 -> story pages 4 and 5
-
-Run:
+## Running Locally
 
 ```bash
-python3 scripts/reextract_cot_ocr_split.py \
-	--pdf samples/the-cave-of-time.pdf \
-	--pdf-start-page 8 \
-	--pdf-end-page 66 \
-	--story-start-page 2 \
-	--output-dir output/cot-pages-ocr-v2
+# Generate web data from story pipeline
+python3 scripts/build_web_data.py
+
+# Start local server
+cd web && python3 -m http.server 8080
+# Open http://localhost:8080
 ```
 
-Generated output:
+## Project Structure
 
-- `output/cot-pages-ocr-v2/*.txt`: OCR re-extraction using left/right half-page splitting
+```
+scripts/                    # Python data pipeline
+  build_story_graph.py      # Build Mermaid graph from OCR pages
+  write_all_stories.py      # Generate all story paths
+  render_story_graph_svg.py # Render graph to SVG
+  build_web_data.py         # Convert pipeline output to web JSON
+output/                     # Pipeline outputs
+  cot-pages-ocr-v2/         # 111 extracted story pages
+  cot-story-graph.mmd       # Mermaid story graph
+  cot-stories/              # 45 generated story paths
+web/                        # Static web frontend
+  index.html                # Landing page
+  reader.html               # Interactive story reader
+  explorer.html             # Graph visualization
+  author.html               # Authoring tool
+  css/style.css             # Shared styles
+  js/                       # Page-specific JavaScript
+  data/story-data.json      # Generated data for frontend
+```
+
+## Course
+
+CSS 382 - Introduction to Artificial Intelligence, Spring 2026, Bellevue College

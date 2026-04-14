@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story Author - Choose Your Own Adventure</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Nav */
+    nav { background: #16213e; padding: 12px 24px; display: flex; align-items: center; gap: 24px; border-bottom: 2px solid #0f3460; }
+    nav a { color: #e94560; text-decoration: none; font-weight: 600; font-size: 14px; padding: 6px 14px; border-radius: 6px; transition: background .2s; }
+    nav a:hover, nav a.active { background: #0f3460; color: #fff; }
+    nav .brand { color: #e94560; font-size: 18px; font-weight: 700; margin-right: auto; }
+
+    /* Toolbar */
+    .toolbar { background: #16213e; padding: 10px 24px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #0f3460; flex-wrap: wrap; }
+    .toolbar button { background: #0f3460; color: #e0e0e0; border: 1px solid #533483; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background .2s; }
+    .toolbar button:hover { background: #533483; }
+    .toolbar .status-bar { margin-left: auto; font-size: 13px; color: #aaa; display: flex; gap: 16px; }
+    .toolbar .status-bar .unsaved { color: #e94560; font-weight: 600; }
+
+    /* Main layout */
+    .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Page list panel */
+    .page-list-panel { width: 220px; min-width: 180px; background: #16213e; border-right: 1px solid #0f3460; display: flex; flex-direction: column; overflow: hidden; }
+    .page-list-panel .panel-header { padding: 12px; border-bottom: 1px solid #0f3460; }
+    .page-list-panel .panel-header h3 { font-size: 14px; margin-bottom: 8px; color: #e94560; }
+    .page-list-panel .panel-header button { width: 100%; padding: 8px; background: #e94560; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .page-list-panel .panel-header button:hover { background: #c73650; }
+    .page-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .page-list .page-item { padding: 8px 10px; margin-bottom: 4px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; transition: background .15s; }
+    .page-list .page-item:hover { background: #0f3460; }
+    .page-list .page-item.selected { background: #533483; color: #fff; }
+    .page-list .page-item .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+    .page-list .page-item .badge.original { background: #0f3460; color: #7ec8e3; }
+    .page-list .page-item .badge.custom { background: #e94560; color: #fff; }
+    .page-list .page-item .badge.terminal { background: #2d6a4f; color: #b7e4c7; }
+
+    /* Editor panel */
+    .editor-panel { flex: 1; padding: 20px 28px; overflow-y: auto; }
+    .editor-panel h2 { color: #e94560; margin-bottom: 16px; font-size: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #aaa; }
+    .form-group input[type="number"],
+    .form-group textarea,
+    .form-group select { width: 100%; padding: 10px; background: #0f3460; border: 1px solid #533483; border-radius: 6px; color: #e0e0e0; font-size: 14px; font-family: inherit; }
+    .form-group textarea { min-height: 180px; resize: vertical; }
+    .form-group input:read-only { opacity: 0.6; cursor: not-allowed; }
+
+    /* Choices section */
+    .choices-section { margin-bottom: 16px; }
+    .choices-section h3 { font-size: 14px; color: #aaa; margin-bottom: 10px; }
+    .choice-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .choice-row input { flex: 2; padding: 8px; background: #0f3460; border: 1px solid #533483; border-radius: 6px; color: #e0e0e0; font-size: 13px; }
+    .choice-row select { flex: 1; padding: 8px; background: #0f3460; border: 1px solid #533483; border-radius: 6px; color: #e0e0e0; font-size: 13px; }
+    .choice-row .btn-remove { background: #c73650; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .choice-row .btn-remove:hover { background: #a02040; }
+
+    .terminal-toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .terminal-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: #e94560; }
+    .terminal-toggle label { font-size: 13px; color: #aaa; cursor: pointer; }
+
+    .editor-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .editor-actions button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background .2s; }
+    .btn-add-choice { background: #0f3460; color: #e0e0e0; border: 1px solid #533483 !important; }
+    .btn-add-choice:hover { background: #533483; }
+    .btn-save { background: #2d6a4f; color: #fff; }
+    .btn-save:hover { background: #1b4332; }
+    .btn-delete { background: #c73650; color: #fff; }
+    .btn-delete:hover { background: #a02040; }
+
+    .empty-state { color: #666; text-align: center; margin-top: 80px; font-size: 15px; }
+
+    /* Graph panel */
+    .graph-panel { width: 280px; min-width: 220px; background: #16213e; border-left: 1px solid #0f3460; display: flex; flex-direction: column; }
+    .graph-panel .panel-header { padding: 12px; border-bottom: 1px solid #0f3460; }
+    .graph-panel .panel-header h3 { font-size: 14px; color: #e94560; }
+    .graph-panel canvas { flex: 1; display: block; }
+
+    /* Hidden file input */
+    #import-input { display: none; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">CYOA</span>
+    <a href="index.html">Home</a>
+    <a href="reader.html">Reader</a>
+    <a href="explorer.html">Explorer</a>
+    <a href="author.html" class="active">Author</a>
+  </nav>
+
+  <div class="toolbar">
+    <button id="btn-export">Export Story JSON</button>
+    <button id="btn-import">Import Story JSON</button>
+    <button id="btn-clear">Clear Custom Pages</button>
+    <input type="file" id="import-input" accept=".json">
+    <div class="status-bar">
+      <span id="status-total">Total: 0</span>
+      <span id="status-custom">Custom: 0</span>
+      <span id="status-unsaved" class="unsaved" style="display:none;">Unsaved changes</span>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- Left: Page list -->
+    <div class="page-list-panel">
+      <div class="panel-header">
+        <h3>Pages</h3>
+        <button id="btn-new-page">+ New Page</button>
+      </div>
+      <div class="page-list" id="page-list"></div>
+    </div>
+
+    <!-- Center: Editor -->
+    <div class="editor-panel" id="editor-panel">
+      <div class="empty-state" id="empty-state">Select a page or create a new one to begin editing.</div>
+
+      <div id="editor-form" style="display:none;">
+        <h2 id="editor-title">Edit Page</h2>
+
+        <div class="form-group">
+          <label for="page-number">Page Number</label>
+          <input type="number" id="page-number" readonly>
+        </div>
+
+        <div class="form-group">
+          <label for="page-text">Page Text</label>
+          <textarea id="page-text" placeholder="Write the story text for this page..."></textarea>
+        </div>
+
+        <div class="terminal-toggle">
+          <input type="checkbox" id="is-terminal">
+          <label for="is-terminal">Terminal ending (no choices)</label>
+        </div>
+
+        <div class="choices-section" id="choices-section">
+          <h3>Choices</h3>
+          <div id="choices-container"></div>
+          <button class="btn-add-choice" id="btn-add-choice">+ Add Choice</button>
+        </div>
+
+        <div class="editor-actions">
+          <button class="btn-save" id="btn-save">Save Page</button>
+          <button class="btn-delete" id="btn-delete" style="display:none;">Delete Page</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Mini graph -->
+    <div class="graph-panel">
+      <div class="panel-header">
+        <h3>Connections</h3>
+      </div>
+      <canvas id="mini-graph"></canvas>
+    </div>
+  </div>
+
+  <script src="js/author.js"></script>
+</body>
+</html>

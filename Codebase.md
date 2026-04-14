@@ -137,6 +137,71 @@ OCR is improved but not perfect.
 - Page continuations across spreads are important; graph construction relies on sequential edges when no explicit choice appears
 - Story page numbers, not PDF page numbers, control graph edges and story traversal
 
+## Web Frontend (Added by fork team)
+
+### Architecture
+
+The web frontend is a static HTML/CSS/JS site deployed on GitHub Pages. It consumes a single `story-data.json` file generated from the existing data pipeline.
+
+### Data Pipeline
+
+`scripts/build_web_data.py` converts the OCR pages and Mermaid graph into `web/data/story-data.json`:
+
+```bash
+python3 scripts/build_web_data.py \
+  --pages-dir output/cot-pages-ocr-v2 \
+  --graph output/cot-story-graph.mmd \
+  --manifest output/cot-stories/manifest.json \
+  --output web/data/story-data.json
+```
+
+The JSON contains:
+- All 111 page texts with extracted choice labels
+- Graph edges (adjacency list)
+- Terminal page list
+- Story manifest (all 45 paths)
+- Summary stats
+
+### Web Pages
+
+All files live under `web/`:
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Landing page with project overview, feature cards, live stats |
+| `reader.html` + `js/reader.js` | Interactive story reader -- click through choices page by page |
+| `explorer.html` + `js/explorer.js` | Canvas-based story graph visualization with pan/zoom/click |
+| `author.html` + `js/author.js` | Authoring tool -- create/edit pages, manage choices, export JSON |
+| `css/style.css` | Shared stylesheet (book-themed, responsive) |
+| `data/story-data.json` | Generated data file consumed by all pages |
+
+### Key Design Decisions
+
+- **No build step**: vanilla HTML/CSS/JS, no framework, no bundler
+- **No backend**: authoring tool uses localStorage + JSON export/import
+- **Static deployment**: GitHub Pages serves `web/` directory directly
+- **Data coupling**: frontend reads `story-data.json` which is regenerated from the pipeline outputs
+
+### Reader Features
+- Page-by-page navigation with clickable choices
+- Breadcrumb trail with back-navigation
+- Path tracking (length, unique pages visited)
+- "The End" overlay for terminal pages
+- Supports `?start=N` query param (linked from graph explorer)
+
+### Explorer Features
+- BFS-layered graph layout rendered on HTML5 Canvas
+- Color-coded nodes: green (start), red (terminal), gold (branch), brown (regular)
+- Click to inspect, hover to highlight edges, pan/zoom
+- Side panel with page preview and "Read from here" link
+
+### Author Features
+- Three-panel layout: page list, editor, mini graph preview
+- Create new pages, edit text, manage choices with dropdowns
+- Mark pages as terminal endings
+- Auto-save to localStorage
+- Export/import full story as JSON
+
 ## Next-Time Guidance
 
 When resuming work:
@@ -144,3 +209,5 @@ When resuming work:
 2. Treat output/cot-pages-ocr-v2 as the current source text.
 3. If extraction quality needs improvement, update reextract_cot_ocr_split.py rather than rebuilding older workflows.
 4. If graph or story outputs need regeneration, rerun build_story_graph.py, write_all_stories.py, and render_story_graph_svg.py in that order.
+5. If web data needs regeneration, rerun `python3 scripts/build_web_data.py` after updating pipeline outputs.
+6. To test locally: `cd web && python3 -m http.server 8080` then open http://localhost:8080

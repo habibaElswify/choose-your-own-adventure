@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story Graph Explorer - Choose Your Own Adventure</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; background: #1a1a2e; color: #e0d6c8; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* Navigation */
+    nav { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 1.5rem; background: #16213e; border-bottom: 2px solid #c9a96e; }
+    nav a { color: #c9a96e; text-decoration: none; font-size: 0.95rem; padding: 0.4rem 0.8rem; border-radius: 4px; transition: background 0.2s; }
+    nav a:hover, nav a.active { background: rgba(201, 169, 110, 0.2); color: #fff; }
+    nav .brand { font-size: 1.1rem; font-weight: bold; color: #e0d6c8; margin-right: auto; }
+
+    /* Stats bar */
+    .stats-bar { display: flex; gap: 2rem; padding: 0.5rem 1.5rem; background: #16213e; border-bottom: 1px solid #333; font-size: 0.85rem; align-items: center; }
+    .stats-bar .stat { display: flex; align-items: center; gap: 0.4rem; }
+    .stats-bar .stat-value { color: #c9a96e; font-weight: bold; font-size: 1rem; }
+
+    /* Legend */
+    .legend { display: flex; gap: 1.2rem; margin-left: auto; align-items: center; font-size: 0.8rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .legend-dot.start { background: #4caf50; }
+    .legend-dot.terminal { background: #e74c3c; }
+    .legend-dot.branch { background: #f0c040; }
+    .legend-dot.regular { background: #c9a96e; }
+
+    /* Main layout */
+    .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Graph container */
+    .graph-container { flex: 1; position: relative; cursor: grab; background: #12121f; }
+    .graph-container.grabbing { cursor: grabbing; }
+    .graph-container canvas { display: block; width: 100%; height: 100%; }
+
+    /* Side panel */
+    .side-panel { width: 320px; background: #16213e; border-left: 2px solid #c9a96e; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; transition: transform 0.3s; }
+    .side-panel.collapsed { transform: translateX(100%); width: 0; padding: 0; border: none; }
+    .side-panel h2 { font-size: 1.1rem; color: #c9a96e; border-bottom: 1px solid #333; padding-bottom: 0.5rem; }
+    .side-panel .placeholder { color: #777; font-style: italic; margin-top: 2rem; text-align: center; }
+
+    /* Page detail card */
+    .page-detail { display: none; flex-direction: column; gap: 0.75rem; }
+    .page-detail.visible { display: flex; }
+    .page-number { font-size: 1.5rem; font-weight: bold; color: #c9a96e; }
+    .page-badge { display: inline-block; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: bold; text-transform: uppercase; margin-left: 0.5rem; }
+    .badge-start { background: #4caf50; color: #fff; }
+    .badge-terminal { background: #e74c3c; color: #fff; }
+    .badge-branch { background: #f0c040; color: #1a1a2e; }
+    .page-text { font-size: 0.85rem; color: #bbb; line-height: 1.5; background: #111; padding: 0.75rem; border-radius: 6px; max-height: 200px; overflow-y: auto; }
+    .choices-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+    .choices-list li { font-size: 0.85rem; padding: 0.4rem 0.6rem; background: rgba(201, 169, 110, 0.1); border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    .choices-list li:hover { background: rgba(201, 169, 110, 0.25); }
+    .choices-list li::before { content: "\2192 "; color: #c9a96e; }
+
+    .btn-read { display: inline-block; margin-top: 0.5rem; padding: 0.6rem 1.2rem; background: #c9a96e; color: #1a1a2e; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; transition: background 0.2s; }
+    .btn-read:hover { background: #e0c080; }
+
+    .zoom-controls { position: absolute; bottom: 1rem; right: 340px; display: flex; gap: 0.4rem; }
+    .zoom-controls button { width: 36px; height: 36px; border: 1px solid #c9a96e; background: #16213e; color: #c9a96e; font-size: 1.2rem; border-radius: 4px; cursor: pointer; }
+    .zoom-controls button:hover { background: #1e2d50; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <span class="brand">Choose Your Own Adventure</span>
+    <a href="index.html">Home</a>
+    <a href="reader.html">Reader</a>
+    <a href="explorer.html" class="active">Explorer</a>
+    <a href="author.html">Author</a>
+  </nav>
+
+  <div class="stats-bar">
+    <div class="stat">Pages: <span class="stat-value" id="stat-pages">--</span></div>
+    <div class="stat">Stories: <span class="stat-value" id="stat-stories">--</span></div>
+    <div class="stat">Endings: <span class="stat-value" id="stat-endings">--</span></div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot start"></span> Start</div>
+      <div class="legend-item"><span class="legend-dot terminal"></span> Ending</div>
+      <div class="legend-item"><span class="legend-dot branch"></span> Branch</div>
+      <div class="legend-item"><span class="legend-dot regular"></span> Regular</div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div class="graph-container" id="graphContainer">
+      <canvas id="graphCanvas"></canvas>
+      <div class="zoom-controls">
+        <button id="zoomIn" title="Zoom in">+</button>
+        <button id="zoomOut" title="Zoom out">&minus;</button>
+        <button id="zoomFit" title="Fit to view">&#8689;</button>
+      </div>
+    </div>
+
+    <div class="side-panel" id="sidePanel">
+      <h2>Page Details</h2>
+      <p class="placeholder" id="panelPlaceholder">Click a node in the graph to view page details.</p>
+      <div class="page-detail" id="pageDetail">
+        <div>
+          <span class="page-number" id="detailPageNum"></span>
+          <span id="detailBadges"></span>
+        </div>
+        <div class="page-text" id="detailText"></div>
+        <div>
+          <strong style="font-size:0.85rem; color:#c9a96e;">Choices:</strong>
+          <ul class="choices-list" id="detailChoices"></ul>
+          <p id="detailNoChoices" style="display:none; font-size:0.85rem; color:#e74c3c; margin-top:0.3rem;">This is a terminal page (ending).</p>
+        </div>
+        <a class="btn-read" id="readFromHere" href="#">Read from here</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/explorer.js"></script>
+</body>
+</html>
