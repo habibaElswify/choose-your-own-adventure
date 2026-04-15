@@ -123,19 +123,8 @@
         // Count terminal pages (endings)
         const endings = pages.filter(key => data.pages[key].is_terminal).length;
 
-        // Count distinct story paths using DFS from start page
-        let pathCount = 0;
-        function countPaths(pageNum) {
-          const page = data.pages[String(pageNum)];
-          if (!page || page.is_terminal || !page.choices || page.choices.length === 0) {
-            pathCount++;
-            return;
-          }
-          for (const choice of page.choices) {
-            countPaths(choice.target);
-          }
-        }
-        countPaths(data.start_page);
+        // Use pre-computed story count from manifest
+        const pathCount = data.stats.total_stories || data.stories.length;
 
         document.getElementById('stat-pages').textContent = totalPages;
         document.getElementById('stat-stories').textContent = pathCount;
